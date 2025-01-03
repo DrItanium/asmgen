@@ -29,9 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 namespace i960 {
 struct Statement {
+    virtual ~Statement();
     virtual void emit(std::ostream& stream) const = 0;
 };
 struct Label : public Statement {
+    ~Label() override = default;
     std::string name;
     std::string comment;
     void emit(std::ostream& stream) const override {
@@ -43,20 +45,47 @@ struct Label : public Statement {
     }
 };
 struct Instruction : public Statement {
-    std::string name;
-    std::string src1;
-    std::string src2;
-    std::string srcDest;
-    std::string comment;
+public:
+    Instruction(const std::string name, 
+                const std::string& src1, 
+                const std::string& src2, 
+                const std::string& srcDest,
+                const std::string& comment) : 
+        _name(name), 
+        _src1(src1), 
+        _src2(src2), 
+        _srcDest(srcDest),
+        _comment(comment) {
+
+        }
+    Instruction(const std::string name, 
+                const std::string& src1, 
+                const std::string& src2, 
+                const std::string& srcDest) : 
+        Instruction(name, src1, src2, srcDest, "") { }
+    ~Instruction() override = default;
+public:
+    [[nodiscard]] constexpr const std::string& getName() const noexcept { return _name; }
+    [[nodiscard]] constexpr const std::string& getSrc1() const noexcept { return _src1; }
+    [[nodiscard]] constexpr const std::string& getSrc2() const noexcept { return _src2; }
+    [[nodiscard]] constexpr const std::string& getSrcDest() const noexcept { return _srcDest; }
+    [[nodiscard]] constexpr const std::string& getComment() const noexcept { return _comment; }
+private:
+    std::string _name;
+    std::string _src1;
+    std::string _src2;
+    std::string _srcDest;
+    std::string _comment;
+public:
     void emit(std::ostream& stream) const override {
         stream << name << "\t";
         if (!src1.empty()) {
             stream << src1;
             if (!src2.empty()) {
                 stream << ", " << src2;
-                if (!srcDest.empty()) {
-                    stream << ", " << srcDest;
-                }
+            }
+            if (!srcDest.empty()) {
+                stream << ", " << srcDest;
             }
         } else if (!src2.empty()) {
             stream << src2;
@@ -73,5 +102,6 @@ struct Instruction : public Statement {
         stream << std::endl;
     }
 };
+
 }
 #endif // end !defined(I960_ASMGEN_H__)
