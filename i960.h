@@ -25,7 +25,53 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef I960_ASMGEN_H__
 #define I960_ASMGEN_H__
+#include <string>
+#include <iostream>
 namespace i960 {
+struct Statement {
+    virtual void emit(std::ostream& stream) const = 0;
+};
+struct Label : public Statement {
+    std::string name;
+    std::string comment;
+    void emit(std::ostream& stream) const override {
+        stream << name << ": ";
+        if (!comment.empty()) {
+            stream << " # " << comment;
+        }
+        stream << std::endl;
+    }
+};
+struct Instruction : public Statement {
+    std::string name;
+    std::string src1;
+    std::string src2;
+    std::string srcDest;
+    std::string comment;
+    void emit(std::ostream& stream) const override {
+        stream << name << "\t";
+        if (!src1.empty()) {
+            stream << src1;
+            if (!src2.empty()) {
+                stream << ", " << src2;
+                if (!srcDest.empty()) {
+                    stream << ", " << srcDest;
+                }
+            }
+        } else if (!src2.empty()) {
+            stream << src2;
+            if (!srcDest.empty()) {
+                stream << ", " << srcDest;
+            }
+        } else if (!srcDest.empty()) {
+            stream << srcDest;
+        }
 
+        if (!comment.empty()) {
+            stream << " # " << comment;
+        }
+        stream << std::endl;
+    }
+};
 }
 #endif // end !defined(I960_ASMGEN_H__)
