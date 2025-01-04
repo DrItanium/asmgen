@@ -51,11 +51,21 @@
                                                              2 (length$ ?self))
                                                     join
                                                     ?separator)))))
+(defclass MAIN::has-parent
+  (is-a USER)
+  (slot parent
+        (type INSTANCE
+              SYMBOL)
+        (allowed-symbols FALSE)
+        (storage local)
+        (visibility public)
+        (default-dynamic FALSE)))
 (defclass MAIN::emittable
   (is-a USER)
   (message-handler emit primary))
 (defclass MAIN::statement
-  (is-a emittable)
+  (is-a emittable
+        has-parent)
   (slot opcode
         (type LEXEME)
         (storage local)
@@ -221,3 +231,36 @@
                    (index 35)
                    (is-global TRUE))
               )
+
+(deffunction MAIN::definstruction
+             (?opcode $?args)
+             (make-instance of instruction
+                            (opcode ?opcode)
+                            (arguments ?args)))
+(deffunction MAIN::ldconst
+             (?value ?destination)
+             (definstruction ldconst
+                             ?value
+                             ?destination))
+; CTRL instructions
+(deffunction MAIN::b (?targ) (definstruction b ?targ))
+(deffunction MAIN::*call (?targ) (definstruction call ?targ))
+(deffunction MAIN::*ret () (definstruction ret))
+(deffunction MAIN::bal (?targ) (definstruction bal ?targ))
+(deffunction MAIN::bno (?targ) (definstruction bno ?targ))
+(deffunction MAIN::bg (?targ) (definstruction bg ?targ))
+(deffunction MAIN::be (?targ) (definstruction be ?targ))
+(deffunction MAIN::bge (?targ) (definstruction bge ?targ))
+(deffunction MAIN::bl (?targ) (definstruction bl ?targ))
+(deffunction MAIN::bne (?targ) (definstruction bne ?targ))
+(deffunction MAIN::ble (?targ) (definstruction ble ?targ))
+(deffunction MAIN::bo (?targ) (definstruction bo ?targ))
+
+(deffunction MAIN::faultno () (definstruction faultno))
+(deffunction MAIN::faultg () (definstruction faultg))
+(deffunction MAIN::faulte () (definstruction faulte))
+(deffunction MAIN::faultge () (definstruction faultge))
+(deffunction MAIN::faultl () (definstruction faultl))
+(deffunction MAIN::faultne () (definstruction faultne))
+(deffunction MAIN::faultle () (definstruction faultle))
+(deffunction MAIN::faulto () (definstruction faulto))
