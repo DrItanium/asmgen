@@ -20,6 +20,7 @@
 ; ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 (defmessage-handler LEXEME emit primary () ?self)
 (defmessage-handler LEXEME emit-as-argument primary () ?self)
 (defmessage-handler NUMBER emit primary () ?self)
@@ -301,17 +302,24 @@
                    (index 35)
                    (is-global TRUE))
               )
+(deffunction MAIN::deflabel
+             (?name)
+             (make-instance of label
+                            (opcode ?name)))
+(deffunction MAIN::deflocal-label
+             (?name)
+             ; take advantage of gnu local label syntax
+             (deflabel (if (integerp ?name) then 
+                         ?name 
+                         else 
+                         (sym-cat .L 
+                                  ?name))))
 
 (deffunction MAIN::definstruction
              (?opcode $?args)
              (make-instance of instruction
                             (opcode ?opcode)
                             (arguments ?args)))
-(deffunction MAIN::ldconst
-             (?value ?destination)
-             (definstruction ldconst
-                             ?value
-                             ?destination))
 ; CTRL instructions
 (deffunction MAIN::b (?targ) (definstruction b ?targ))
 (deffunction MAIN::*call (?targ) (definstruction call ?targ))
@@ -524,12 +532,36 @@
 (deffunction MAIN::subrl (?src1 ?src2 ?dst) (definstruction subrl ?src1 ?src2 ?dst))
 (deffunction MAIN::addrl (?src1 ?src2 ?dst) (definstruction addrl ?src1 ?src2 ?dst))
 
-(deffunction MAIN::send-iac 
-             (?dest ?src)
-             (create$ (ldconst 0xFF000010 
-                               ?dest)
-                      (synmovq ?dest 
-                               ?src)))
+; the only really important pseudo instruction
+(defgeneric MAIN::ldconst
+            "A psuedo instruction that makes loading constants trivial")
+(defmethod MAIN::ldconst
+  (?value ?destination)
+  (definstruction ldconst 
+                  ?value
+                  ?destination))
+; when we want to load a constant in the range of 0 to 31
+(defmethod MAIN::ldconst
+  ((?value INTEGER
+           (<= 0 ?current-argument
+               31))
+   ?destination)
+  (mov ?value 
+       ?destination))
+(defmethod MAIN::ldconst
+  ((?value INTEGER
+           (= ?current-argument 
+              -1))
+   ?destination)
+  (subo 1 0 ?destination))
+(defmethod MAIN::ldconst
+  ((?value SYMBOL
+           (not (neq ?current-argument
+                     0xFFFFFFFF
+                     0xffffffff)))
+   ?destination)
+  (*not 0 
+        ?destination))
 ; pseudo instructions
 (defgeneric MAIN::nandl)
 (defgeneric MAIN::norl)
@@ -597,4 +629,12 @@
                        get-next-register))))
 
 
-(deffunction MAIN::zero-register (?dest) (mov 0 ?dest))
+(deffunction MAIN::zero-register 
+             (?dest) 
+             (ldconst 0 ?dest))
+(deffunction MAIN::send-iac 
+             (?dest ?src)
+             (create$ (ldconst 0xFF000010 
+                               ?dest)
+                      (synmovq ?dest 
+                               ?src)))
