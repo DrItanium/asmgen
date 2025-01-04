@@ -1,1 +1,1 @@
-C/C++ code generation header-only library
+CLIPS based i960 code generation library
