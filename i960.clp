@@ -570,7 +570,69 @@
               31)
         ?destination))
 
+(defclass MAIN::code-body
+  (is-a emittable
+        has-parent)
+  (multislot contents
+             (storage local)
+             (visibility public)
+             (default ?NONE))
+  (message-handler emit primary))
+(defmessage-handler MAIN::code-body emit primary
+                    ()
+                    (send ?self:contents
+                          emit))
+
+(deffunction MAIN::defbody
+             ($?contents)
+             (make-instance of code-body 
+                            (contents ?contents)))
+(defclass MAIN::pseudo-instruction
+  (is-a instruction
+        code-body)
+  (message-handler reconstruct primary)
+  (message-handler emit primary))
+(defmessage-handler MAIN::pseudo-instruction emit primary
+                    ()
+                    (send ?self:contents
+                          emit))
+(defmessage-handler MAIN::pseudo-instruction reconstruct primary
+                    ()
+                    (str-cat ?self:opcode " "
+                             (expand$ (send (send ?self:arguments
+                                                  emit-as-argument)
+                                            join
+                                            ,))))
+(deffunction MAIN::defpseudo-instruction
+             (?name ?arguments $?body)
+             (make-instance of pseudo-instruction
+                            (opcode ?name)
+                            (arguments ?arguments)
+                            (contents ?body)))
+; We want to prevent the loss of information so we make pseudo instructions both a code body and instruction
+; the instruction refers to the pseudo instruction with the code body referring to the expansion
 ; pseudo instructions
+(deffunction MAIN::save-globals
+             (?temporary)
+             (defpseudo-instruction save-globals
+                                    (create$ ?temporary)
+                                    (ldconst 64
+                                             ?temporary)
+                                    (addo [sp] 
+                                          ?temporary
+                                          [sp])
+                                    (*stq [g0] "-64(sp)")
+                                    (*stq [g4] "-48(sp)")
+                                    (*stq [g8] "-32(sp)")
+                                    (*stt [g12] "-16(sp)")))
+(deffunction MAIN::restore-globals
+             ()
+             (defpseudo-instruction restore-globals
+                                    (create$)
+                                    (*ldq "-64(sp)" [g0])
+                                    (*ldq "-48(sp)" [g4])
+                                    (*ldq "-32(sp)" [g8])
+                                    (*ldt "-16(sp)" [g12])))
 (defgeneric MAIN::nandl)
 (defgeneric MAIN::norl)
 (defgeneric MAIN::xorl)
@@ -748,28 +810,15 @@
 (deffunction MAIN::check-lsb (?src) (chkbit 0 ?src))
 (deffunction MAIN::is-even 
              (?src ?dest)
-             (create$ (check-lsb ?src)
-                      (testno ?dest)))
+             (defpseudo-instruction is-even
+                                    (create$ ?src
+                                             ?dest)
+                                    (check-lsb ?src)
+                                    (testno ?dest)))
 (deffunction MAIN::is-odd
              (?src ?dest)
-             (create$ (check-lsb ?src)
-                      (teste ?dest)))
-
-(deffunction MAIN::save-globals
-             (?temporary)
-             (create$ (ldconst 64
-                               ?temporary)
-                      (addo [sp] 
-                            ?temporary
-                            [sp])
-                      (*stq [g0] "-64(sp)")
-                      (*stq [g4] "-48(sp)")
-                      (*stq [g8] "-32(sp)")
-                      (*stt [g12] "-16(sp)")))
-(deffunction MAIN::restore-globals
-             ()
-             (create$ (*ldq "-64(sp)" [g0])
-                      (*ldq "-48(sp)" [g4])
-                      (*ldq "-32(sp)" [g8])
-                      (*ldt "-16(sp)" [g12])))
-
+             (defpseudo-instruction is-odd
+                                    (create$ ?src
+                                             ?dest)
+                                    (check-lsb ?src)
+                                    (teste ?dest)))
