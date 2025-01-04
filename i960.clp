@@ -120,6 +120,14 @@
         (visibility public)
         (access initialize-only)
         (default ?NONE))
+  (slot next-register
+        (type SYMBOL
+              INSTANCE)
+        (allowed-symbols FALSE)
+        (storage local)
+        (visibility public)
+        (access initialize-only)
+        (default-dynamic FALSE))
   (slot is-global
         (type SYMBOL)
         (allowed-symbols FALSE
@@ -128,7 +136,11 @@
         (visibility public)
         (access initialize-only)
         (default ?NONE))
+  (message-handler has-next-register primary)
   (message-handler emit primary))
+(defmessage-handler MAIN::register has-next-register primary
+                    ()
+                    (instancep ?self:next-register))
 (defmessage-handler MAIN::register emit primary
                     ()
                     (instance-name-to-symbol (instance-name ?self)))
@@ -151,96 +163,126 @@
 
 (definstances MAIN::registers
               (pfp of register
+                   (next-register [sp])
                    (index 0)
                    (is-global FALSE))
               (sp of register
+                   (next-register [rip])
                    (index 1)
                    (is-global FALSE))
               (rip of register
+                   (next-register [r3])
                    (index 2)
                    (is-global FALSE))
               (r3 of register 
+                   (next-register [r4])
                   (index 3)
                   (is-global FALSE))
               (r4 of register 
+                   (next-register [r5])
                   (index 4)
                   (is-global FALSE))
               (r5 of register 
+                   (next-register [r6])
                   (index 5)
                   (is-global FALSE))
               (r6 of register 
+                  (next-register [r7])
                   (index 6)
                   (is-global FALSE))
               (r7 of register 
+                  (next-register [r8])
                   (index 7)
                   (is-global FALSE))
               (r8 of register 
+                  (next-register [r9])
                   (index 8)
                   (is-global FALSE))
               (r9 of register 
+                  (next-register [r10])
                   (index 9)
                   (is-global FALSE))
               (r10 of register 
+                  (next-register [r11])
                   (index 10)
                   (is-global FALSE))
               (r11 of register 
+                  (next-register [r12])
                   (index 11)
                   (is-global FALSE))
               (r12 of register 
+                  (next-register [r13])
                   (index 12)
                   (is-global FALSE))
               (r13 of register 
+                  (next-register [r14])
                   (index 13)
                   (is-global FALSE))
               (r14 of register 
+                  (next-register [r15])
                   (index 14)
                   (is-global FALSE))
               (r15 of register 
                   (index 15)
                   (is-global FALSE))
               (g0 of register 
+                  (next-register [g1])
                   (index 16)
                   (is-global TRUE))
               (g1 of register 
+                  (next-register [g2])
                   (index 17)
                   (is-global TRUE))
               (g2 of register 
+                  (next-register [g3])
                   (index 18)
                   (is-global TRUE))
               (g3 of register 
+                  (next-register [g4])
                   (index 19)
                   (is-global TRUE))
               (g4 of register 
+                  (next-register [g5])
                   (index 20)
                   (is-global TRUE))
               (g5 of register 
+                  (next-register [g6])
                   (index 21)
                   (is-global TRUE))
               (g6 of register 
+                  (next-register [g7])
                   (index 22)
                   (is-global TRUE))
               (g7 of register 
+                  (next-register [g8])
                   (index 23)
                   (is-global TRUE))
               (g8 of register 
+                  (next-register [g9])
                   (index 24)
                   (is-global TRUE))
               (g9 of register 
+                  (next-register [g10])
                   (index 25)
                   (is-global TRUE))
               (g10 of register 
+                  (next-register [g11])
                   (index 26)
                   (is-global TRUE))
               (g11 of register 
+                  (next-register [g12])
                   (index 27)
                   (is-global TRUE))
               (g12 of register 
+                  (next-register [g13])
                   (index 28)
                   (is-global TRUE))
               (g13 of register 
+                  (next-register [g14])
                   (index 29)
                   (is-global TRUE))
               (g14 of register 
+                  (next-register [fp])
                   (index 30)
                   (is-global TRUE))
               (fp of register 
@@ -343,18 +385,18 @@
 ; reg instructions
 (deffunction MAIN::notbit (?bitpos ?src ?dst) (definstruction notbit ?bitpos ?src ?dst))
 (deffunction MAIN::*and (?src1 ?src2 ?dst) (definstruction and ?src1 ?src2 ?dst))
-(deffunction MAIN::*andnot (?src1 ?src2 ?dst) (definstruction andnot ?src1 ?src2 ?dst))
+(deffunction MAIN::andnot (?src1 ?src2 ?dst) (definstruction andnot ?src1 ?src2 ?dst))
 (deffunction MAIN::setbit (?bitpos ?src ?dst) (definstruction setbit ?bitpos ?src ?dst))
-(deffunction MAIN::*notand (?src1 ?src2 ?dst) (definstruction notand ?src1 ?src2 ?dst))
-(deffunction MAIN::*xor (?src1 ?src2 ?dst) (definstruction xor ?src1 ?src2 ?dst))
+(deffunction MAIN::notand (?src1 ?src2 ?dst) (definstruction notand ?src1 ?src2 ?dst))
+(deffunction MAIN::xor (?src1 ?src2 ?dst) (definstruction xor ?src1 ?src2 ?dst))
 (deffunction MAIN::*or (?src1 ?src2 ?dst) (definstruction or ?src1 ?src2 ?dst))
-(deffunction MAIN::*nor (?src1 ?src2 ?dst) (definstruction nor ?src1 ?src2 ?dst))
-(deffunction MAIN::*xnor (?src1 ?src2 ?dst) (definstruction xnor ?src1 ?src2 ?dst))
+(deffunction MAIN::nor (?src1 ?src2 ?dst) (definstruction nor ?src1 ?src2 ?dst))
+(deffunction MAIN::xnor (?src1 ?src2 ?dst) (definstruction xnor ?src1 ?src2 ?dst))
 (deffunction MAIN::*not (?src ?dst) (definstruction not ?src ?dst))
-(deffunction MAIN::*ornot (?src1 ?src2 ?dst) (definstruction ornot ?src1 ?src2 ?dst))
+(deffunction MAIN::ornot (?src1 ?src2 ?dst) (definstruction ornot ?src1 ?src2 ?dst))
 (deffunction MAIN::clrbit (?bitpos ?src ?dst) (definstruction clrbit ?bitpos ?src ?dst))
-(deffunction MAIN::*notor (?src1 ?src2 ?dst) (definstruction notor ?src1 ?src2 ?dst))
-(deffunction MAIN::*nand (?src1 ?src2 ?dst) (definstruction nand ?src1 ?src2 ?dst))
+(deffunction MAIN::notor (?src1 ?src2 ?dst) (definstruction notor ?src1 ?src2 ?dst))
+(deffunction MAIN::nand (?src1 ?src2 ?dst) (definstruction nand ?src1 ?src2 ?dst))
 (deffunction MAIN::alterbit (?bitpos ?src ?dst) (definstruction alterbit ?bitpos ?src ?dst))
 (deffunction MAIN::addo (?src1 ?src2 ?dst) (definstruction addo ?src1 ?src2 ?dst))
 (deffunction MAIN::addi (?src1 ?src2 ?dst) (definstruction addi ?src1 ?src2 ?dst))
@@ -481,3 +523,31 @@
 (deffunction MAIN::mulrl (?src1 ?src2 ?dst) (definstruction mulrl ?src1 ?src2 ?dst))
 (deffunction MAIN::subrl (?src1 ?src2 ?dst) (definstruction subrl ?src1 ?src2 ?dst))
 (deffunction MAIN::addrl (?src1 ?src2 ?dst) (definstruction addrl ?src1 ?src2 ?dst))
+
+(deffunction MAIN::send-iac 
+             (?dest ?src)
+             (create$ (ldconst 0xFF000010 
+                               ?dest)
+                      (synmovq ?dest 
+                               ?src)))
+(defgeneric MAIN::nandl)
+(defmethod MAIN::nandl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (create$ (nand ?src1
+                 ?src2
+                 ?dst)
+           (nand (send ?src1
+                       get-next-register)
+                 (send ?src2
+                       get-next-register)
+                 (send ?dst
+                       get-next-register))))
+
