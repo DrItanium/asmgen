@@ -20,6 +20,37 @@
 ; ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+(defmessage-handler LEXEME emit primary 
+                    () 
+                    ?self)
+(defmessage-handler NUMBER emit primary
+                    ()
+                    ?self)
+(defmessage-handler MULTIFIELD emit primary
+                    ()
+                    (bind ?result
+                          (create$))
+                    (progn$ (?item ?self)
+                            (bind ?result
+                                  ?result
+                                  (send ?item
+                                        emit)))
+                    ?result)
+
+(defmessage-handler MULTIFIELD join primary
+                    (?separator)
+                    (switch (length$ ?self)
+                            (case 0 then ?self)
+                            (case 1 then ?self)
+                            (case 2 then (create$ (nth$ 1 ?self)
+                                                  ?separator
+                                                  (nth$ 2 ?self)))
+                            (default (create$ (nth$ 1 ?self)
+                                              ?separator
+                                              (send (subseq$ ?self
+                                                             2 (length$ ?self))
+                                                    join
+                                                    ?separator)))))
 (defclass MAIN::emittable
   (is-a USER)
   (message-handler emit primary))
@@ -40,20 +71,6 @@
                     ()
                     (str-cat ?self:opcode
                              :))
-(defmessage-handler MULTIFIELD join primary
-                    (?separator)
-                    (switch (length$ ?self)
-                            (case 0 then ?self)
-                            (case 1 then ?self)
-                            (case 2 then (create$ (nth$ 1 ?self)
-                                                  ?separator
-                                                  (nth$ 2 ?self)))
-                            (default (create$ (nth$ 1 ?self)
-                                              ?separator
-                                              (send (subseq$ ?self
-                                                             2 (length$ ?self))
-                                                    join
-                                                    ?separator)))))
 (defclass MAIN::register
   (is-a emittable)
   (slot index
@@ -84,25 +101,15 @@
         (storage local)
         (visibility public))
   (message-handler emit primary))
-;(defmessage-handler MAIN::instruction emit primary
-;                    ()
-;                    (format nil
-;                            "%s %s"
-;                            
-;                    (bind ?result
-;                          ?self:opcode)
-;                    (if ?self:src1 then
-;                      (bind ?result
-;                            (format nil
-;                                    "%s %s"
-;                                    ?result
-;                                    ?self:src1))
-;                      (if ?self:src2 then
-;                        (bind ?result 
-;                              (str-cat ?result , ?self:src2)))
-;                      else
-                      
+(defmessage-handler MAIN::instruction emit primary
+                    ()
 
+
+                    (str-cat ?self:opcode " "
+                             (expand$ (send (send ?self:arguments
+                                                  emit)
+                                            join
+                                            ,))))
 
 (definstances MAIN::registers
               (pfp of register
