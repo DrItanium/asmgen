@@ -530,7 +530,10 @@
                                ?dest)
                       (synmovq ?dest 
                                ?src)))
+; pseudo instructions
 (defgeneric MAIN::nandl)
+(defgeneric MAIN::norl)
+(defgeneric MAIN::xorl)
 (defmethod MAIN::nandl
   ((?src1 register
           (send ?current-argument
@@ -551,3 +554,47 @@
                  (send ?dst
                        get-next-register))))
 
+
+(defmethod MAIN::norl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (create$ (nor ?src1
+                 ?src2
+                 ?dst)
+           (nor (send ?src1
+                       get-next-register)
+                 (send ?src2
+                       get-next-register)
+                 (send ?dst
+                       get-next-register))))
+
+
+(defmethod MAIN::xorl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (create$ (xor ?src1
+                 ?src2
+                 ?dst)
+           (xor (send ?src1
+                       get-next-register)
+                 (send ?src2
+                       get-next-register)
+                 (send ?dst
+                       get-next-register))))
+
+
+(deffunction MAIN::zero-register (?dest) (mov 0 ?dest))
