@@ -562,6 +562,14 @@
    ?destination)
   (*not 0 
         ?destination))
+(defmethod MAIN::ldconst
+  ((?value INTEGER
+           (<= 32 ?current-argument 62))
+   ?destination)
+  (addo 31 (- ?value 
+              31)
+        ?destination))
+
 ; pseudo instructions
 (defgeneric MAIN::nandl)
 (defgeneric MAIN::norl)
@@ -638,3 +646,112 @@
                                ?dest)
                       (synmovq ?dest 
                                ?src)))
+
+; two instruction combination for comparing and saving the result in a register
+(deffunction MAIN::cmpx->reg
+             (?src1 ?src2 ?dest ?cmp-op ?op)
+             (create$ (funcall (sym-cat cmp 
+                                        ?cmp-op)
+                               ?src1
+                               ?src2)
+                      (funcall (sym-cat test ?op)
+                               ?dest)))
+(deffunction MAIN::cmpi->reg
+             (?src1 ?src2 ?dest ?op)
+             (cmpx->reg ?src1
+                        ?src2
+                        ?dest
+                        i
+                        ?op))
+(deffunction MAIN::cmpo->reg
+             (?src1 ?src2 ?dest ?op)
+             (cmpx->reg ?src1
+                        ?src2
+                        ?dest
+                        o
+                        ?op))
+(deffunction MAIN::cmpr->reg
+             (?src1 ?src2 ?dest ?op)
+             (cmpx->reg ?src1
+                        ?src2
+                        ?dest
+                        r
+                        ?op))
+(deffunction MAIN::cmprl->reg
+             (?src1 ?src2 ?dest ?op)
+             (cmpx->reg ?src1
+                        ?src2
+                        ?dest
+                        rl
+                        ?op))
+(deffunction MAIN::cmpie (?src1 ?src2 ?dest) (cmpi->reg ?src1 ?src2 ?dest e))
+(deffunction MAIN::cmpine (?src1 ?src2 ?dest) (cmpi->reg ?src1 ?src2 ?dest ne))
+(deffunction MAIN::cmpil (?src1 ?src2 ?dest) (cmpi->reg ?src1 ?src2 ?dest l))
+(deffunction MAIN::cmpile (?src1 ?src2 ?dest) (cmpi->reg ?src1 ?src2 ?dest le))
+(deffunction MAIN::cmpig (?src1 ?src2 ?dest) (cmpi->reg ?src1 ?src2 ?dest g))
+(deffunction MAIN::cmpige (?src1 ?src2 ?dest) (cmpi->reg ?src1 ?src2 ?dest ge))
+(deffunction MAIN::cmpio (?src1 ?src2 ?dest) (cmpi->reg ?src1 ?src2 ?dest o))
+(deffunction MAIN::cmpino (?src1 ?src2 ?dest) (cmpi->reg ?src1 ?src2 ?dest no))
+(deffunction MAIN::cmpoe (?src1 ?src2 ?dest) (cmpo->reg ?src1 ?src2 ?dest e))
+(deffunction MAIN::cmpone (?src1 ?src2 ?dest) (cmpo->reg ?src1 ?src2 ?dest ne))
+(deffunction MAIN::cmpol (?src1 ?src2 ?dest) (cmpo->reg ?src1 ?src2 ?dest l))
+(deffunction MAIN::cmpole (?src1 ?src2 ?dest) (cmpo->reg ?src1 ?src2 ?dest le))
+(deffunction MAIN::cmpog (?src1 ?src2 ?dest) (cmpo->reg ?src1 ?src2 ?dest g))
+(deffunction MAIN::cmpoge (?src1 ?src2 ?dest) (cmpo->reg ?src1 ?src2 ?dest ge))
+(deffunction MAIN::cmpoo (?src1 ?src2 ?dest) (cmpo->reg ?src1 ?src2 ?dest o))
+(deffunction MAIN::cmpono (?src1 ?src2 ?dest) (cmpo->reg ?src1 ?src2 ?dest no))
+(deffunction MAIN::cmpre (?src1 ?src2 ?dest) (cmpr->reg ?src1 ?src2 ?dest e))
+(deffunction MAIN::cmprne (?src1 ?src2 ?dest) (cmpr->reg ?src1 ?src2 ?dest ne))
+(deffunction MAIN::cmprl (?src1 ?src2 ?dest) (cmpr->reg ?src1 ?src2 ?dest l))
+(deffunction MAIN::cmprle (?src1 ?src2 ?dest) (cmpr->reg ?src1 ?src2 ?dest le))
+(deffunction MAIN::cmprg (?src1 ?src2 ?dest) (cmpr->reg ?src1 ?src2 ?dest g))
+(deffunction MAIN::cmprge (?src1 ?src2 ?dest) (cmpr->reg ?src1 ?src2 ?dest ge))
+(deffunction MAIN::cmpro (?src1 ?src2 ?dest) (cmpr->reg ?src1 ?src2 ?dest o))
+(deffunction MAIN::cmprno (?src1 ?src2 ?dest) (cmpr->reg ?src1 ?src2 ?dest no))
+(deffunction MAIN::cmprle (?src1 ?src2 ?dest) (cmprl->reg ?src1 ?src2 ?dest e))
+(deffunction MAIN::cmprlne (?src1 ?src2 ?dest) (cmprl->reg ?src1 ?src2 ?dest ne))
+(deffunction MAIN::cmprll (?src1 ?src2 ?dest) (cmprl->reg ?src1 ?src2 ?dest l))
+(deffunction MAIN::cmprlle (?src1 ?src2 ?dest) (cmprl->reg ?src1 ?src2 ?dest le))
+(deffunction MAIN::cmprlg (?src1 ?src2 ?dest) (cmprl->reg ?src1 ?src2 ?dest g))
+(deffunction MAIN::cmprlge (?src1 ?src2 ?dest) (cmprl->reg ?src1 ?src2 ?dest ge))
+(deffunction MAIN::cmprlo (?src1 ?src2 ?dest) (cmprl->reg ?src1 ?src2 ?dest o))
+(deffunction MAIN::cmprlno (?src1 ?src2 ?dest) (cmprl->reg ?src1 ?src2 ?dest no))
+; we can also do this to cmpstr as well
+; 0b010 -> identical strings
+; 0b100 -> mismatch where src1's byte is less than src2's byte
+; 0b001 -> mismatch where src1's byte is greater than src2's byte
+
+(deffunction MAIN::strings-equal
+             (?src1 ?src2 ?len ?dest)
+             ; okay we want to see if we got 0b010
+             (create$ (cmpstr ?src1 ?src2 ?len)
+                      (teste ?dest)))
+
+
+; branch not equal to zero integer
+(deffunction MAIN::bnezi (?src ?dest) (cmpibne 0 ?src ?dest))
+(deffunction MAIN::bezi (?src ?dest) (cmpibe 0 ?src ?dest))
+(deffunction MAIN::bgzi (?src ?dest) (cmpibg 0 ?src ?dest))
+(deffunction MAIN::bgezi (?src ?dest) (cmpibge 0 ?src ?dest))
+(deffunction MAIN::blzi (?src ?dest) (cmpibl 0 ?src ?dest))
+(deffunction MAIN::blezi (?src ?dest) (cmpible 0 ?src ?dest))
+
+(deffunction MAIN::clear-msb (?src ?dest) (clrbit 31 ?src ?dest))
+(deffunction MAIN::clear-lsb (?src ?dest) (clrbit 0 ?src ?dest))
+(deffunction MAIN::set-msb (?src ?dest) (setbit 31 ?src ?dest))
+(deffunction MAIN::set-lsb (?src ?dest) (setbit 0 ?src ?dest))
+
+
+(deffunction MAIN::toggle-msb (?src ?dest) (notbit 31 ?src ?dest))
+(deffunction MAIN::toggle-lsb (?src ?dest) (notbit 0 ?src ?dest))
+(deffunction MAIN::check-msb (?src) (chkbit 31 ?src))
+(deffunction MAIN::check-lsb (?src) (chkbit 0 ?src))
+(deffunction MAIN::is-even 
+             (?src ?dest)
+             (create$ (check-lsb ?src)
+                      (testno ?dest)))
+(deffunction MAIN::is-odd
+             (?src ?dest)
+             (create$ (check-lsb ?src)
+                      (teste ?dest)))
+
