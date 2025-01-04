@@ -20,12 +20,10 @@
 ; ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-(defmessage-handler LEXEME emit primary 
-                    () 
-                    ?self)
-(defmessage-handler NUMBER emit primary
-                    ()
-                    ?self)
+(defmessage-handler LEXEME emit primary () ?self)
+(defmessage-handler LEXEME emit-as-argument primary () ?self)
+(defmessage-handler NUMBER emit primary () ?self)
+(defmessage-handler NUMBER emit-as-argument primary () ?self)
 (defmessage-handler MULTIFIELD emit primary
                     ()
                     (bind ?result
@@ -36,6 +34,17 @@
                                   (send ?item
                                         emit)))
                     ?result)
+(defmessage-handler MULTIFIELD emit-as-argument primary
+                    ()
+                    (bind ?result
+                          (create$))
+                    (progn$ (?item ?self)
+                            (bind ?result
+                                  ?result
+                                  (send ?item
+                                        emit-as-argument)))
+                    ?result)
+
 
 (defmessage-handler MULTIFIELD join primary
                     (?separator)
@@ -62,7 +71,24 @@
         (default-dynamic FALSE)))
 (defclass MAIN::emittable
   (is-a USER)
+  (message-handler emit primary)
+  (message-handler emit-as-argument primary))
+(defmessage-handler MAIN::emittable emit-as-argument
+                    ()
+                    ; redirect to emit
+                    (send ?self
+                          emit))
+(defclass MAIN::alias
+  (is-a emittable)
+  (slot target
+        (storage local)
+        (visibility public)
+        (default ?NONE))
   (message-handler emit primary))
+(defmessage-handler MAIN::alias emit primary
+                    ()
+                    (send ?self:target
+                          emit))
 (defclass MAIN::statement
   (is-a emittable
         has-parent)
@@ -75,12 +101,16 @@
 
 (defclass MAIN::label
   (is-a statement)
+  (message-handler emit-as-argument primary)
   (message-handler emit primary))
 
 (defmessage-handler MAIN::label emit primary
                     ()
                     (str-cat ?self:opcode
                              :))
+(defmessage-handler MAIN::label emit-as-argument primary
+                    ()
+                    ?self:opcode)
 (defclass MAIN::register
   (is-a emittable)
   (slot index
@@ -113,11 +143,9 @@
   (message-handler emit primary))
 (defmessage-handler MAIN::instruction emit primary
                     ()
-
-
                     (str-cat ?self:opcode " "
                              (expand$ (send (send ?self:arguments
-                                                  emit)
+                                                  emit-as-argument)
                                             join
                                             ,))))
 
@@ -264,3 +292,92 @@
 (deffunction MAIN::faultne () (definstruction faultne))
 (deffunction MAIN::faultle () (definstruction faultle))
 (deffunction MAIN::faulto () (definstruction faulto))
+; cobr instructions
+(deffunction MAIN::testno (?dst) (definstruction testno ?dst))
+(deffunction MAIN::testg (?dst) (definstruction testg ?dst))
+(deffunction MAIN::teste (?dst) (definstruction teste ?dst))
+(deffunction MAIN::testge (?dst) (definstruction testge ?dst))
+(deffunction MAIN::testl (?dst) (definstruction testl ?dst))
+(deffunction MAIN::testne (?dst) (definstruction testne ?dst))
+(deffunction MAIN::testle (?dst) (definstruction testle ?dst))
+(deffunction MAIN::testo (?dst) (definstruction testo ?dst))
+(deffunction MAIN::bbc (?bitpos ?src ?targ) (definstruction bbc ?bitpos ?src ?targ))
+(deffunction MAIN::cmpobg (?src1 ?src2 ?targ) (definstruction cmpobg ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpobe (?src1 ?src2 ?targ) (definstruction cmpobe ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpobge (?src1 ?src2 ?targ) (definstruction cmpobge ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpobl (?src1 ?src2 ?targ) (definstruction cmpobl ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpobne (?src1 ?src2 ?targ) (definstruction cmpobne ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpoble (?src1 ?src2 ?targ) (definstruction cmpoble ?src1 ?src2 ?targ))
+(deffunction MAIN::bbs (?bitpos ?src ?targ) (definstruction bbs ?bitpos ?src ?targ))
+(deffunction MAIN::cmpibno (?src1 ?src2 ?targ) (definstruction cmpibno ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpibg (?src1 ?src2 ?targ) (definstruction cmpibg ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpibe (?src1 ?src2 ?targ) (definstruction cmpibe ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpibge (?src1 ?src2 ?targ) (definstruction cmpibge ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpibl (?src1 ?src2 ?targ) (definstruction cmpibl ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpibne (?src1 ?src2 ?targ) (definstruction cmpibne ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpible (?src1 ?src2 ?targ) (definstruction cmpible ?src1 ?src2 ?targ))
+(deffunction MAIN::cmpibo (?src1 ?src2 ?targ) (definstruction cmpibo ?src1 ?src2 ?targ))
+
+; mem instructions
+(deffunction MAIN::*ldob (?src ?dst) (definstruction ldob ?src ?dst))
+(deffunction MAIN::*stob (?src ?dst) (definstruction stob ?src ?dst))
+(deffunction MAIN::*bx (?targ) (definstruction bx ?targ))
+(deffunction MAIN::*balx (?targ ?dst) (definstruction balx ?targ ?dst))
+(deffunction MAIN::*callx (?targ) (definstruction callx ?targ))
+(deffunction MAIN::*ldos (?src ?dst) (definstruction ldos ?src ?dst))
+(deffunction MAIN::*stos (?src ?dst) (definstruction stos ?src ?dst))
+(deffunction MAIN::*lda (?src ?dst) (definstruction lda ?src ?dst))
+(deffunction MAIN::*ld (?src ?dst) (definstruction ld ?src ?dst))
+(deffunction MAIN::*st (?src ?dst) (definstruction ld ?src ?dst))
+(deffunction MAIN::*ldl (?src ?dst) (definstruction ldl ?src ?dst))
+(deffunction MAIN::*stl (?src ?dst) (definstruction stl ?src ?dst))
+(deffunction MAIN::*ldt (?src ?dst) (definstruction ldt ?src ?dst))
+(deffunction MAIN::*stt (?src ?dst) (definstruction stt ?src ?dst))
+(deffunction MAIN::*ldq (?src ?dst) (definstruction ldq ?src ?dst))
+(deffunction MAIN::*stq (?src ?dst) (definstruction stq ?src ?dst))
+(deffunction MAIN::*ldib (?src ?dst) (definstruction ldib ?src ?dst))
+(deffunction MAIN::*stib (?src ?dst) (definstruction stib ?src ?dst))
+(deffunction MAIN::*ldis (?src ?dst) (definstruction ldis ?src ?dst))
+(deffunction MAIN::*stis (?src ?dst) (definstruction stis ?src ?dst))
+
+; reg instructions
+(deffunction MAIN::notbit (?bitpos ?src ?dst) (definstruction notbit ?bitpos ?src ?dst))
+(deffunction MAIN::*and (?src1 ?src2 ?dst) (definstruction and ?src1 ?src2 ?dst))
+(deffunction MAIN::*andnot (?src1 ?src2 ?dst) (definstruction andnot ?src1 ?src2 ?dst))
+(deffunction MAIN::setbit (?bitpos ?src ?dst) (definstruction setbit ?bitpos ?src ?dst))
+(deffunction MAIN::*notand (?src1 ?src2 ?dst) (definstruction notand ?src1 ?src2 ?dst))
+(deffunction MAIN::*xor (?src1 ?src2 ?dst) (definstruction xor ?src1 ?src2 ?dst))
+(deffunction MAIN::*or (?src1 ?src2 ?dst) (definstruction or ?src1 ?src2 ?dst))
+(deffunction MAIN::*nor (?src1 ?src2 ?dst) (definstruction nor ?src1 ?src2 ?dst))
+(deffunction MAIN::*xnor (?src1 ?src2 ?dst) (definstruction xnor ?src1 ?src2 ?dst))
+(deffunction MAIN::*not (?src ?dst) (definstruction not ?src ?dst))
+(deffunction MAIN::*ornot (?src1 ?src2 ?dst) (definstruction ornot ?src1 ?src2 ?dst))
+(deffunction MAIN::clrbit (?bitpos ?src ?dst) (definstruction clrbit ?bitpos ?src ?dst))
+(deffunction MAIN::*notor (?src1 ?src2 ?dst) (definstruction notor ?src1 ?src2 ?dst))
+(deffunction MAIN::*nand (?src1 ?src2 ?dst) (definstruction nand ?src1 ?src2 ?dst))
+(deffunction MAIN::alterbit (?bitpos ?src ?dst) (definstruction alterbit ?bitpos ?src ?dst))
+(deffunction MAIN::addo (?src1 ?src2 ?dst) (definstruction addo ?src1 ?src2 ?dst))
+(deffunction MAIN::addi (?src1 ?src2 ?dst) (definstruction addi ?src1 ?src2 ?dst))
+(deffunction MAIN::subo (?src1 ?src2 ?dst) (definstruction subo ?src1 ?src2 ?dst))
+(deffunction MAIN::subi (?src1 ?src2 ?dst) (definstruction subi ?src1 ?src2 ?dst))
+(deffunction MAIN::shro (?len ?src ?dst) (definstruction shro ?len ?src ?dst))
+(deffunction MAIN::shrdi (?len ?src ?dst) (definstruction shrdi ?len ?src ?dst))
+(deffunction MAIN::shlo (?len ?src ?dst) (definstruction shlo ?len ?src ?dst))
+(deffunction MAIN::rotate (?len ?src ?dst) (definstruction rotate ?len ?src ?dst))
+(deffunction MAIN::shli (?len ?src ?dst) (definstruction shli ?len ?src ?dst))
+(deffunction MAIN::cmpo (?src1 ?src2) (definstruction cmpo ?src1 ?src2))
+(deffunction MAIN::cmpi (?src1 ?src2) (definstruction cmpi ?src1 ?src2))
+(deffunction MAIN::concmpo (?src1 ?src2) (definstruction concmpo ?src1 ?src2))
+(deffunction MAIN::concmpi (?src1 ?src2) (definstruction concmpi ?src1 ?src2))
+(deffunction MAIN::cmpinco (?src1 ?src2 ?dst) (definstruction cmpinco ?src1 ?src2 ?dst))
+(deffunction MAIN::cmpinci (?src1 ?src2 ?dst) (definstruction cmpinci ?src1 ?src2 ?dst))
+(deffunction MAIN::cmpdeco (?src1 ?src2 ?dst) (definstruction cmpdeco ?src1 ?src2 ?dst))
+(deffunction MAIN::cmpdeci (?src1 ?src2 ?dst) (definstruction cmpdeci ?src1 ?src2 ?dst))
+(deffunction MAIN::scanbyte (?src1 ?src2) (definstruction scanbyte ?src1 ?src2))
+(deffunction MAIN::chkbit (?bitpos ?src) (definstruction chkbit ?bitpos ?src))
+(deffunction MAIN::addc (?src1 ?src2 ?dst) (definstruction addc ?src1 ?src2 ?dst))
+(deffunction MAIN::subc (?src1 ?src2 ?dst) (definstruction subc ?src1 ?src2 ?dst))
+(deffunction MAIN::mov (?src ?dst) (definstruction mov ?src ?dst))
+(deffunction MAIN::movl (?src ?dst) (definstruction movl ?src ?dst))
+(deffunction MAIN::movt (?src ?dst) (definstruction movt ?src ?dst))
+(deffunction MAIN::movq (?src ?dst) (definstruction movq ?src ?dst))
