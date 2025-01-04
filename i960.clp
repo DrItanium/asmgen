@@ -634,8 +634,6 @@
                                     (*ldq "-32(sp)" [g8])
                                     (*ldt "-16(sp)" [g12])))
 (defgeneric MAIN::nandl)
-(defgeneric MAIN::norl)
-(defgeneric MAIN::xorl)
 (defmethod MAIN::nandl
   ((?src1 register
           (send ?current-argument
@@ -646,57 +644,19 @@
    (?dst register
          (send ?current-argument
                has-next-register)))
-  (create$ (nand ?src1
-                 ?src2
-                 ?dst)
-           (nand (send ?src1
-                       get-next-register)
-                 (send ?src2
-                       get-next-register)
-                 (send ?dst
-                       get-next-register))))
-
-
-(defmethod MAIN::norl
-  ((?src1 register
-          (send ?current-argument
-                has-next-register))
-   (?src2 register
-          (send ?current-argument
-                has-next-register))
-   (?dst register
-         (send ?current-argument
-               has-next-register)))
-  (create$ (nor ?src1
-                 ?src2
-                 ?dst)
-           (nor (send ?src1
-                       get-next-register)
-                 (send ?src2
-                       get-next-register)
-                 (send ?dst
-                       get-next-register))))
-
-
-(defmethod MAIN::xorl
-  ((?src1 register
-          (send ?current-argument
-                has-next-register))
-   (?src2 register
-          (send ?current-argument
-                has-next-register))
-   (?dst register
-         (send ?current-argument
-               has-next-register)))
-  (create$ (xor ?src1
-                 ?src2
-                 ?dst)
-           (xor (send ?src1
-                       get-next-register)
-                 (send ?src2
-                       get-next-register)
-                 (send ?dst
-                       get-next-register))))
+  (defpseudo-instruction nandl
+                         (create$ ?src1
+                                  ?src2
+                                  ?dst)
+                         (nand ?src1
+                               ?src2
+                               ?dst)
+                         (nand (send ?src1
+                                     get-next-register)
+                               (send ?src2
+                                     get-next-register)
+                               (send ?dst
+                                     get-next-register))))
 
 
 (deffunction MAIN::zero-register 
@@ -704,20 +664,27 @@
              (ldconst 0 ?dest))
 (deffunction MAIN::send-iac 
              (?dest ?src)
-             (create$ (ldconst 0xFF000010 
-                               ?dest)
-                      (synmovq ?dest 
-                               ?src)))
+             (defpseudo-instruction send-iac
+                                    (create$ ?dest
+                                             ?src)
+                                    (ldconst 0xFF000010 
+                                             ?dest)
+                                    (synmovq ?dest 
+                                             ?src)))
 
 ; two instruction combination for comparing and saving the result in a register
 (deffunction MAIN::cmpx->reg
              (?src1 ?src2 ?dest ?cmp-op ?op)
-             (create$ (funcall (sym-cat cmp 
-                                        ?cmp-op)
-                               ?src1
-                               ?src2)
-                      (funcall (sym-cat test ?op)
-                               ?dest)))
+             (defpseudo-instruction (sym-cat cmp ?cmp-op ?op)
+                                    (create$ ?src1
+                                             ?src2
+                                             ?dest)
+                                    (funcall (sym-cat cmp 
+                                                      ?cmp-op)
+                                             ?src1
+                                             ?src2)
+                                    (funcall (sym-cat test ?op)
+                                             ?dest)))
 (deffunction MAIN::cmpi->reg
              (?src1 ?src2 ?dest ?op)
              (cmpx->reg ?src1
@@ -786,8 +753,14 @@
 (deffunction MAIN::strings-equal
              (?src1 ?src2 ?len ?dest)
              ; okay we want to see if we got 0b010
-             (create$ (cmpstr ?src1 ?src2 ?len)
-                      (teste ?dest)))
+             (defpseudo-instruction strings-equal
+                                    (create$ ?src1
+                                             ?src2
+                                             ?len
+                                             ?dest)
+
+                                    (cmpstr ?src1 ?src2 ?len)
+                                    (teste ?dest)))
 
 
 ; branch not equal to zero integer
