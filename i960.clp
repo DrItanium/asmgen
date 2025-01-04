@@ -755,3 +755,21 @@
              (create$ (check-lsb ?src)
                       (teste ?dest)))
 
+(deffunction MAIN::save-globals
+             (?temporary)
+             (create$ (ldconst 64
+                               ?temporary)
+                      (addo [sp] 
+                            ?temporary
+                            [sp])
+                      (*stq [g0] "-64(sp)")
+                      (*stq [g4] "-48(sp)")
+                      (*stq [g8] "-32(sp)")
+                      (*stt [g12] "-16(sp)")))
+(deffunction MAIN::restore-globals
+             ()
+             (create$ (*ldq "-64(sp)" [g0])
+                      (*ldq "-48(sp)" [g4])
+                      (*ldq "-32(sp)" [g8])
+                      (*ldt "-16(sp)" [g12])))
+
