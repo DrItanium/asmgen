@@ -633,7 +633,34 @@
                                     (*ldq "-48(sp)" [g4])
                                     (*ldq "-32(sp)" [g8])
                                     (*ldt "-16(sp)" [g12])))
-(defgeneric MAIN::nandl)
+(defgeneric MAIN::long-binary-operation)
+(defmethod MAIN::long-binary-operation
+  ((?function SYMBOL)
+   (?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (defpseudo-instruction (sym-cat ?function l)
+                         (create$ ?src1
+                                  ?src2
+                                  ?dst)
+                         (funcall ?function
+                                  ?src1
+                                  ?src2
+                                  ?dst)
+                         (funcall ?function
+                                  (send ?src1
+                                        get-next-register)
+                                  (send ?src2
+                                        get-next-register)
+                                  (send ?dst
+                                        get-next-register))))
+            
 (defmethod MAIN::nandl
   ((?src1 register
           (send ?current-argument
@@ -644,24 +671,100 @@
    (?dst register
          (send ?current-argument
                has-next-register)))
-  (defpseudo-instruction nandl
-                         (create$ ?src1
-                                  ?src2
-                                  ?dst)
-                         (nand ?src1
-                               ?src2
-                               ?dst)
-                         (nand (send ?src1
-                                     get-next-register)
-                               (send ?src2
-                                     get-next-register)
-                               (send ?dst
-                                     get-next-register))))
-
+  (long-binary-operation nand 
+                         ?src1 
+                         ?src2 
+                         ?dst))
+(defmethod MAIN::norl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (long-binary-operation nor 
+                         ?src1 
+                         ?src2 
+                         ?dst))
+(defmethod MAIN::xorl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (long-binary-operation xor 
+                         ?src1 
+                         ?src2 
+                         ?dst))
+(defmethod MAIN::andnotl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (long-binary-operation andnot 
+                         ?src1 
+                         ?src2 
+                         ?dst))
+(defmethod MAIN::notandl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (long-binary-operation notand 
+                         ?src1 
+                         ?src2 
+                         ?dst))
+(defmethod MAIN::ornotl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (long-binary-operation ornot 
+                         ?src1 
+                         ?src2 
+                         ?dst))
+(defmethod MAIN::notorl
+  ((?src1 register
+          (send ?current-argument
+                has-next-register))
+   (?src2 register
+          (send ?current-argument
+                has-next-register))
+   (?dst register
+         (send ?current-argument
+               has-next-register)))
+  (long-binary-operation notor 
+                         ?src1 
+                         ?src2 
+                         ?dst))
+; @todo handle and, or, not specially
 
 (deffunction MAIN::zero-register 
              (?dest) 
-             (ldconst 0 ?dest))
+             (mov 0 
+                  ?dest))
 (deffunction MAIN::send-iac 
              (?dest ?src)
              (defpseudo-instruction send-iac
