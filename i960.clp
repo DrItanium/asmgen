@@ -148,11 +148,11 @@
 (defclass MAIN::instruction
   (is-a statement)
   (multislot arguments
-        (type LEXEME
-              NUMBER
-              INSTANCE)
-        (storage local)
-        (visibility public))
+             (type LEXEME
+                   NUMBER
+                   INSTANCE)
+             (storage local)
+             (visibility public))
   (message-handler emit primary))
 (defmessage-handler MAIN::instruction emit primary
                     ()
@@ -168,23 +168,23 @@
                    (index 0)
                    (is-global FALSE))
               (sp of register
-                   (next-register [rip])
-                   (index 1)
-                   (is-global FALSE))
+                  (next-register [rip])
+                  (index 1)
+                  (is-global FALSE))
               (rip of register
                    (next-register [r3])
                    (index 2)
                    (is-global FALSE))
               (r3 of register 
-                   (next-register [r4])
+                  (next-register [r4])
                   (index 3)
                   (is-global FALSE))
               (r4 of register 
-                   (next-register [r5])
+                  (next-register [r5])
                   (index 4)
                   (is-global FALSE))
               (r5 of register 
-                   (next-register [r6])
+                  (next-register [r6])
                   (index 5)
                   (is-global FALSE))
               (r6 of register 
@@ -204,28 +204,28 @@
                   (index 9)
                   (is-global FALSE))
               (r10 of register 
-                  (next-register [r11])
-                  (index 10)
-                  (is-global FALSE))
+                   (next-register [r11])
+                   (index 10)
+                   (is-global FALSE))
               (r11 of register 
-                  (next-register [r12])
-                  (index 11)
-                  (is-global FALSE))
+                   (next-register [r12])
+                   (index 11)
+                   (is-global FALSE))
               (r12 of register 
-                  (next-register [r13])
-                  (index 12)
-                  (is-global FALSE))
+                   (next-register [r13])
+                   (index 12)
+                   (is-global FALSE))
               (r13 of register 
-                  (next-register [r14])
-                  (index 13)
-                  (is-global FALSE))
+                   (next-register [r14])
+                   (index 13)
+                   (is-global FALSE))
               (r14 of register 
-                  (next-register [r15])
-                  (index 14)
-                  (is-global FALSE))
+                   (next-register [r15])
+                   (index 14)
+                   (is-global FALSE))
               (r15 of register 
-                  (index 15)
-                  (is-global FALSE))
+                   (index 15)
+                   (is-global FALSE))
               (g0 of register 
                   (next-register [g1])
                   (index 16)
@@ -267,25 +267,25 @@
                   (index 25)
                   (is-global TRUE))
               (g10 of register 
-                  (next-register [g11])
-                  (index 26)
-                  (is-global TRUE))
+                   (next-register [g11])
+                   (index 26)
+                   (is-global TRUE))
               (g11 of register 
-                  (next-register [g12])
-                  (index 27)
-                  (is-global TRUE))
+                   (next-register [g12])
+                   (index 27)
+                   (is-global TRUE))
               (g12 of register 
-                  (next-register [g13])
-                  (index 28)
-                  (is-global TRUE))
+                   (next-register [g13])
+                   (index 28)
+                   (is-global TRUE))
               (g13 of register 
-                  (next-register [g14])
-                  (index 29)
-                  (is-global TRUE))
+                   (next-register [g14])
+                   (index 29)
+                   (is-global TRUE))
               (g14 of register 
-                  (next-register [fp])
-                  (index 30)
-                  (is-global TRUE))
+                   (next-register [fp])
+                   (index 30)
+                   (is-global TRUE))
               (fp of register 
                   (index 31)
                   (is-global TRUE))
@@ -660,7 +660,7 @@
                                         get-next-register)
                                   (send ?dst
                                         get-next-register))))
-            
+
 (defmethod MAIN::nandl
   ((?src1 register
           (send ?current-argument
@@ -898,3 +898,53 @@
                                              ?dest)
                                     (check-lsb ?src)
                                     (teste ?dest)))
+
+(defclass MAIN::function-declaration
+  (is-a code-body)
+  (slot title 
+        (type SYMBOL)
+        (visibility public)
+        (storage local)
+        (default ?NONE))
+  (message-handler init after))
+(defmessage-handler MAIN::function-declaration init after
+                    ()
+                    (bind ?self:contents
+                          (deflabel ?self:title)
+                          ?self:contents))
+
+(defclass MAIN::window-function
+  (is-a function-declaration)
+  (message-handler init after))
+(defmessage-handler MAIN::window-function init after
+                    ()
+                    (bind ?self:contents
+                          ?self:contents
+                          (*ret)))
+
+(defclass MAIN::leaf-function
+  (is-a function-declaration)
+  (message-handler init after))
+(defmessage-handler MAIN::leaf-function init after
+                    ()
+                    (bind ?self:contents
+                          ?self:contents
+                          (*bx "(g14)")))
+(deffunction MAIN::defun
+             (?kind ?name $?body)
+             (make-instance of ?kind
+                            (title ?name)
+                            (contents ?body)))
+
+(deffunction MAIN::defun-window
+             (?name $?body)
+             (defun window-function
+               ?name
+               ?body))
+(deffunction MAIN::defun-leaf
+             (?name $?body)
+             (defun leaf-function
+               ?name
+               ?body))
+
+
