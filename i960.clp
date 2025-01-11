@@ -899,6 +899,7 @@
                                     (check-lsb ?src)
                                     (teste ?dest)))
 
+(deffunction MAIN::leaf-return () (*bx "(g14)"))
 (defclass MAIN::function-declaration
   (is-a code-body)
   (slot title 
@@ -929,22 +930,12 @@
                     ()
                     (bind ?self:contents
                           ?self:contents
-                          (*bx "(g14)")))
+                          (leaf-return)))
 (deffunction MAIN::defun
              (?kind ?name $?body)
              (make-instance of ?kind
                             (title ?name)
                             (contents ?body)))
 
-(deffunction MAIN::defun-window
-             (?name $?body)
-             (defun window-function
-               ?name
-               ?body))
-(deffunction MAIN::defun-leaf
-             (?name $?body)
-             (defun leaf-function
-               ?name
-               ?body))
-
-
+(deffunction MAIN::defun-window (?name $?body) (defun window-function ?name ?body))
+(deffunction MAIN::defun-leaf (?name $?body) (defun leaf-function ?name ?body))
