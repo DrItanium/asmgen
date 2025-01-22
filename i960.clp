@@ -957,3 +957,13 @@
 
 (deffunction MAIN::text-section ($?body) (create$ (defdirective .text) $?body))
 (deffunction MAIN::data-section ($?body) (create$ (defdirective .data) $?body))
+(deffunction MAIN::defsection 
+             (?name $?args)
+             (defdirective .section
+                           ?name
+                           $?args))
+(deffunction MAIN::align
+             (?alignment $?body)
+             (create$ (defdirective .align
+                                    ?alignment)
+                      $?body))
