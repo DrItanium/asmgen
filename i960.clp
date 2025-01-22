@@ -967,3 +967,24 @@
              (create$ (defdirective .align
                                     ?alignment)
                       $?body))
+(defgeneric MAIN::decrement)
+(defgeneric MAIN::increment)
+(defmethod MAIN::decrement
+  (?target ?dest)
+  (subo 1
+        ?target
+        ?dest))
+(defmethod MAIN::decrement
+  (?target)
+  (decrement ?target
+             ?target))
+
+(defmethod MAIN::increment
+  (?target ?dest)
+  (addo 1
+        ?target
+        ?dest))
+(defmethod MAIN::increment
+  (?target)
+  (increment ?target
+             ?target))
