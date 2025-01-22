@@ -988,3 +988,9 @@
   (?target)
   (increment ?target
              ?target))
+
+(deffunction MAIN::clear-register
+             (?target)
+             (mov 0 
+                  ?target))
+
