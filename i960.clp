@@ -302,6 +302,13 @@
                    (index 35)
                    (is-global TRUE))
               )
+(defclass MAIN::directive
+  (is-a instruction))
+(deffunction MAIN::defdirective
+             (?kind $?args)
+             (make-instance of directive 
+                            (opcode ?kind)
+                            (arguments ?args)))
 (deffunction MAIN::deflabel
              (?name)
              (make-instance of label
@@ -939,3 +946,14 @@
 
 (deffunction MAIN::defun-window (?name $?body) (defun window-function ?name ?body))
 (deffunction MAIN::defun-leaf (?name $?body) (defun leaf-function ?name ?body))
+(deffunction MAIN::defstring
+             (?string)
+             (defdirective .asciz
+                           ?string))
+(deffunction MAIN::defword
+             ($?args)
+             (defdirective .word
+                           ?args))
+
+(deffunction MAIN::text-section ($?body) (create$ (defdirective .text) $?body))
+(deffunction MAIN::data-section ($?body) (create$ (defdirective .data) $?body))
